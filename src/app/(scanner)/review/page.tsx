@@ -2,6 +2,7 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import BookConfirmCard from "@/components/scanner/BookConfirmCard";
 import type { EnrichedMetadata, BookCondition } from "@/types/book";
 
@@ -9,7 +10,7 @@ export default function ReviewPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex min-h-dvh items-center justify-center">
+        <div className="flex min-h-[60dvh] items-center justify-center">
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent" />
         </div>
       }
@@ -28,7 +29,11 @@ function ReviewContent() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
+  const [enrichFailed, setEnrichFailed] = useState(false);
+  const [success, setSuccess] = useState<{
+    title: string;
+    bookId: string;
+  } | null>(null);
 
   // Enrich on mount
   useEffect(() => {
@@ -40,17 +45,22 @@ function ReviewContent() {
         return res.json();
       })
       .then(setMetadata)
-      .catch(() =>
-        setError("Could not find metadata. You can enter details manually.")
-      )
+      .catch(() => setEnrichFailed(true))
       .finally(() => setLoading(false));
   }, [isbn]);
 
-  async function handleConfirm(extra: {
+  async function handleConfirm(data: {
+    title: string;
+    author: string;
+    genre: string[];
+    subjectTags: string[];
+    description: string;
+    language: string;
+    coverURL: string;
     shelfLocation: string;
     condition: BookCondition;
+    addedBy: string;
   }) {
-    if (!metadata) return;
     setSubmitting(true);
     setError(null);
 
@@ -59,22 +69,22 @@ function ReviewContent() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         isbn,
-        title: metadata.title,
-        author: metadata.author,
-        genre: metadata.genre,
-        subjectTags: metadata.subjectTags,
-        coverURL: metadata.coverURL,
-        description: metadata.description,
-        language: metadata.language,
+        title: data.title,
+        author: data.author,
+        genre: data.genre,
+        subjectTags: data.subjectTags,
+        coverURL: data.coverURL,
+        description: data.description,
+        language: data.language,
         status: "Available",
-        shelfLocation: extra.shelfLocation,
-        condition: extra.condition,
-        addedBy: "", // Will be populated by session once auth is wired
+        shelfLocation: data.shelfLocation,
+        condition: data.condition,
+        addedBy: data.addedBy,
       }),
     });
 
     if (res.status === 409) {
-      setError("This book is already in the library.");
+      setError("This book (ISBN) is already in the library.");
       setSubmitting(false);
       return;
     }
@@ -85,75 +95,93 @@ function ReviewContent() {
       return;
     }
 
-    setSuccess(true);
+    const book = await res.json();
+    setSuccess({ title: data.title, bookId: book.id });
   }
 
+  // ── No ISBN ───────────────────────────────────────────────────────
   if (!isbn) {
     return (
-      <div className="flex min-h-dvh items-center justify-center p-4">
+      <div className="flex min-h-[60dvh] items-center justify-center p-4">
         <p className="text-gray-500">No ISBN provided.</p>
       </div>
     );
   }
 
+  // ── Loading ───────────────────────────────────────────────────────
   if (loading) {
     return (
-      <div className="flex min-h-dvh items-center justify-center p-4">
+      <div className="flex min-h-[60dvh] flex-col items-center justify-center gap-3 p-4">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent" />
+        <p className="text-sm text-gray-500">
+          Looking up ISBN {isbn}…
+        </p>
       </div>
     );
   }
 
+  // ── Success ───────────────────────────────────────────────────────
   if (success) {
     return (
-      <div className="mx-auto flex min-h-dvh max-w-md flex-col items-center justify-center gap-4 p-4 text-center">
-        <div className="text-5xl">&#10003;</div>
+      <div className="mx-auto flex min-h-[60dvh] max-w-md flex-col items-center justify-center gap-4 p-4 text-center">
+        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-100 text-3xl text-green-600">
+          &#10003;
+        </div>
         <h2 className="text-xl font-semibold text-gray-900">Book added!</h2>
         <p className="text-sm text-gray-500">
-          &ldquo;{metadata?.title}&rdquo; is now in the catalogue.
+          &ldquo;{success.title}&rdquo; is now in the catalogue.
         </p>
-        <button
-          onClick={() => router.push("/scan")}
-          className="mt-2 rounded-lg bg-indigo-600 px-6 py-3 text-sm font-medium text-white hover:bg-indigo-700"
-        >
-          Scan another
-        </button>
+        <div className="flex flex-col gap-2 pt-2 sm:flex-row">
+          <Link
+            href={`/books/${success.bookId}`}
+            className="rounded-lg border border-indigo-600 px-5 py-2.5 text-sm font-medium text-indigo-600 hover:bg-indigo-50"
+          >
+            View Book
+          </Link>
+          <button
+            onClick={() => router.push("/scan")}
+            className="rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-indigo-700"
+          >
+            Scan Another
+          </button>
+          <Link
+            href="/"
+            className="rounded-lg border border-gray-300 px-5 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+          >
+            Home
+          </Link>
+        </div>
       </div>
     );
   }
 
-  if (!metadata) {
-    return (
-      <div className="mx-auto flex min-h-dvh max-w-md flex-col items-center justify-center gap-4 p-4 text-center">
-        <p className="text-gray-500">{error ?? "No metadata found."}</p>
-        <button
-          onClick={() => router.push("/scan")}
-          className="rounded-lg border border-gray-300 px-5 py-2.5 text-sm text-gray-700 hover:bg-gray-50"
-        >
-          Back to scanner
-        </button>
-      </div>
-    );
-  }
-
+  // ── Review / Manual entry form ────────────────────────────────────
   return (
-    <div className="mx-auto flex min-h-dvh max-w-md flex-col gap-6 p-4">
+    <div className="mx-auto flex max-w-md flex-col gap-6 p-4">
       <header>
-        <h1 className="text-2xl font-bold text-gray-900">Confirm Details</h1>
+        <h1 className="text-2xl font-bold text-gray-900">
+          {enrichFailed ? "Enter Book Details" : "Confirm Details"}
+        </h1>
         <p className="text-sm text-gray-500">
-          Verify the info below, then add to the library
+          {enrichFailed
+            ? "We couldn\u2019t find this book automatically. Fill in what you can."
+            : "Verify and edit the info below, then add to the library"}
         </p>
       </header>
 
       <BookConfirmCard
         isbn={isbn}
-        metadata={metadata}
+        metadata={enrichFailed ? null : metadata}
         onConfirm={handleConfirm}
         onCancel={() => router.push("/scan")}
         submitting={submitting}
       />
 
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && (
+        <p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">
+          {error}
+        </p>
+      )}
     </div>
   );
 }

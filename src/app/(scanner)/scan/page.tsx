@@ -23,13 +23,10 @@ export default function ScanPage() {
   );
 
   return (
-    <div className="mx-auto flex min-h-dvh max-w-md flex-col gap-6 p-4">
-      <header>
-        <h1 className="text-2xl font-bold text-gray-900">Scan a Book</h1>
-        <p className="text-sm text-gray-500">
-          Point camera at the barcode, or type the ISBN below
-        </p>
-      </header>
+    <div className="mx-auto flex max-w-md flex-col gap-4 p-4">
+      <p className="text-sm text-gray-500">
+        Point camera at the barcode, or type the ISBN below
+      </p>
 
       <BarcodeScanner onDetected={handleISBN} />
 

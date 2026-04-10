@@ -44,7 +44,6 @@ export default function CataloguePage() {
   return (
     <div className="mx-auto min-h-dvh max-w-4xl p-4">
       <header className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">BookShelf</h1>
         <p className="text-sm text-gray-500">
           Browse the school library catalogue
         </p>
