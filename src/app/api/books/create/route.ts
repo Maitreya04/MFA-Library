@@ -17,15 +17,22 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // Dedup check
-  const existing = await getBookByISBN(body.isbn);
-  if (existing) {
-    return NextResponse.json(
-      { error: "Book already exists", book: existing },
-      { status: 409 }
-    );
-  }
+  try {
+    // Dedup check
+    const existing = await getBookByISBN(body.isbn);
+    if (existing) {
+      return NextResponse.json(
+        { error: "Book already exists", book: existing },
+        { status: 409 }
+      );
+    }
 
-  const book = await createBook(body);
-  return NextResponse.json(book, { status: 201 });
+    const book = await createBook(body);
+    return NextResponse.json(book, { status: 201 });
+  } catch (err) {
+    console.error("[books/create] Notion error:", err);
+    const message =
+      err instanceof Error ? err.message : "Unknown error writing to Notion";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
 }

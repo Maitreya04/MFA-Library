@@ -110,7 +110,7 @@ export async function createBook(input: CreateBookInput): Promise<Book> {
       SubjectTags: {
         multi_select: input.subjectTags.map((t) => ({ name: t })),
       },
-      CoverURL: { url: input.coverURL || null },
+      ...(input.coverURL ? { CoverURL: { url: input.coverURL } } : {}),
       Description: {
         rich_text: [{ text: { content: input.description.slice(0, 2000) } }],
       },

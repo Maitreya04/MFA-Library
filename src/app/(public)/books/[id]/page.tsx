@@ -10,14 +10,14 @@ export default async function BookDetailPage({
 
   if (!book) {
     return (
-      <div className="flex min-h-dvh items-center justify-center">
+      <div className="flex min-h-0 items-center justify-center">
         <p className="text-gray-500">Book not found.</p>
       </div>
     );
   }
 
   return (
-    <div className="mx-auto min-h-dvh max-w-2xl p-4">
+    <div className="mx-auto min-h-0 max-w-2xl p-4">
       <Link
         href="/"
         className="mb-4 inline-block text-sm text-indigo-600 hover:underline"

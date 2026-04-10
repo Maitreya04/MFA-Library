@@ -10,7 +10,7 @@ export default function ReviewPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex min-h-[60dvh] items-center justify-center">
+        <div className="flex py-20 items-center justify-center">
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent" />
         </div>
       }
@@ -90,7 +90,8 @@ function ReviewContent() {
     }
 
     if (!res.ok) {
-      setError("Failed to save. Try again.");
+      const body = await res.json().catch(() => null);
+      setError(body?.error ?? "Failed to save. Try again.");
       setSubmitting(false);
       return;
     }
@@ -102,7 +103,7 @@ function ReviewContent() {
   // ── No ISBN ───────────────────────────────────────────────────────
   if (!isbn) {
     return (
-      <div className="flex min-h-[60dvh] items-center justify-center p-4">
+      <div className="flex py-20 items-center justify-center p-4">
         <p className="text-gray-500">No ISBN provided.</p>
       </div>
     );
@@ -111,7 +112,7 @@ function ReviewContent() {
   // ── Loading ───────────────────────────────────────────────────────
   if (loading) {
     return (
-      <div className="flex min-h-[60dvh] flex-col items-center justify-center gap-3 p-4">
+      <div className="flex py-20 flex-col items-center justify-center gap-3 p-4">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent" />
         <p className="text-sm text-gray-500">
           Looking up ISBN {isbn}…
@@ -123,7 +124,7 @@ function ReviewContent() {
   // ── Success ───────────────────────────────────────────────────────
   if (success) {
     return (
-      <div className="mx-auto flex min-h-[60dvh] max-w-md flex-col items-center justify-center gap-4 p-4 text-center">
+      <div className="mx-auto flex py-20 max-w-md flex-col items-center justify-center gap-4 p-4 text-center">
         <div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-100 text-3xl text-green-600">
           &#10003;
         </div>

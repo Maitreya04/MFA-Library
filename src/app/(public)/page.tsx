@@ -42,7 +42,7 @@ export default function CataloguePage() {
   }, [books, search, genreFilter]);
 
   return (
-    <div className="mx-auto min-h-dvh max-w-4xl p-4">
+    <div className="mx-auto min-h-0 max-w-4xl p-4">
       <header className="mb-6">
         <p className="text-sm text-gray-500">
           Browse the school library catalogue
